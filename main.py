@@ -30,6 +30,11 @@ def load_csv_file(file_name: str):
 def create_report(data):
     # create report file with the following fields: city, avg price per city and total price per city 
     try:
+        required_columns = ['city', 'price']
+        for col in required_columns:
+            if col not in data.columns:
+                raise ValueError(f"The {col} column is missing in the given data.")
+        
         report = data.groupby('city').agg(
             avg_price_per_city = ("price", "mean"),
             total_price_per_city = ("price", "sum")
@@ -41,6 +46,38 @@ def create_report(data):
         print(f"{report_file_name} file has been successfully created.")
     except Exception as e:
         print(f"Error while creating the report file: {e}")
+    
+def create_additional_report(data):
+    # create additional report file with the following fields:
+    # city, avg beds number per city, avg square meter price,
+    # first sale date per city and last sale date per city
+    try:
+        required_columns = ['city', 'beds', 'price', 'sale_date']
+        for col in data.columns:
+            if col not in required_columns:
+                raise ValueError(f"The {col} column is missing in the given data.")
+            
+        # add new column for square meters
+        if 'sq__ft' not in data.columns:
+                raise ValueError(f"The 'sq__ft' column is missing in the given data.")
+        SQ_M_TO_SQ_FT = 10.7639104
+        data['sq__m'] = data['sq__ft'] / SQ_M_TO_SQ_FT
+        data['price_per_sq__m'] = data['price'] / data['sq__m']
+
+        additional_report = data.groupby('city').agg(
+            avg_beds_number_per_city = ("beds", "mean"),
+            avg_square_m_price = ("price_per_sq__m", "mean"),
+            first_sale_date_per_city = ("sale_date", "min"),
+            last_sale_date_per_city = ("sale_date", "max")
+        ).reset_index()
+
+        # save the report file
+        additional_report_file_name = "additional_report.csv"
+        additional_report.to_csv(additional_report_file_name, index = False)
+        print(f"{additional_report_file_name} file has been successfully created.")
+
+    except Exception as e:
+        print(f"Error while creating the additional report file: {e}")
 
 def main():
     file_name = "Sacramentorealestatetransactions (1).csv"
@@ -49,6 +86,8 @@ def main():
 
     if data is not None:
         create_report(data)
+        create_additional_report(data)
+
 
 if __name__ == "__main__":
     main()
