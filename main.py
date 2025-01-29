@@ -53,8 +53,8 @@ def create_additional_report(data):
     # first sale date per city and last sale date per city
     try:
         required_columns = ['city', 'beds', 'price', 'sale_date']
-        for col in data.columns:
-            if col not in required_columns:
+        for col in required_columns:
+            if col not in data.columns:
                 raise ValueError(f"The {col} column is missing in the given data.")
             
         # add new column for square meters
