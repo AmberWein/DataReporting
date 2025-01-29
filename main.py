@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 
 
 def load_csv_file(file_name: str):
@@ -20,12 +21,33 @@ def load_csv_file(file_name: str):
         for col in required_cols:
             if col not in data.columns:
                 raise ValueError(f"Missing required column: {col} in the CSV file.")
+        
         return data
 
     except Exception as e:
         print(f"Error: {e}")
     
     return None
+
+def clean_data(data):
+    """
+    Clean the data by:
+    1. Replacing infinite values with Nan.
+    2. Dropping rows with missing essential columns.
+    3. Removing rows with zero values in spesific columns.
+    """
+
+    # replace infinite values with Nan
+    data.replace([np.inf, -np.inf], np.nan, inplace = True)
+    
+    # drop rows with Nan values in required columns
+    required_cols = ['city', 'price']
+    data.dropna(subset=required_cols, inplace = True)
+
+    # Removing rows with zero values in spesific columns.
+    zero_cols = ['price', 'beds', 'sq__ft']
+    data[zero_cols] = data[zero_cols].replace(0, np.nan)
+    data.dropna(subset = zero_cols, inplace = True)
 
 def create_report(data):
     # create report file with the following fields: city, avg price per city and total price per city 
@@ -60,6 +82,7 @@ def create_additional_report(data):
         # add new column for square meters
         if 'sq__ft' not in data.columns:
                 raise ValueError(f"The 'sq__ft' column is missing in the given data.")
+        
         SQ_M_TO_SQ_FT = 10.7639104
         data['sq__m'] = data['sq__ft'] / SQ_M_TO_SQ_FT
         data['price_per_sq__m'] = data['price'] / data['sq__m']
@@ -85,6 +108,7 @@ def main():
     data = load_csv_file(file_name)
 
     if data is not None:
+        clean_data(data)
         create_report(data)
         create_additional_report(data)
 
